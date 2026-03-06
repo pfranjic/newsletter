@@ -1,0 +1,49 @@
+# Use an image that matches your project's JDK version
+image: openjdk:17-jdk-slim
+
+# Cache the Gradle dependencies so you don't download the internet on every push
+cache:
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
+variables:
+  # This helps Gradle run more smoothly in CI environments
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+stages:
+  - build
+  - test
+  - package
+
+# 1. Compile the code
+build_job:
+  stage: build
+  script:
+    - ./gradlew assemble
+  artifacts:
+    paths:
+      - build/libs/*.jar
+    expire_in: 1 week
+
+# 2. Run Unit Tests
+test_job:
+  stage: test
+  script:
+    - ./gradlew test
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results/test/**/TEST-*.xml
+
+# 3. Create a Docker Image (Optional)
+# This assumes you have a Dockerfile in your repo
+package_job:
+  stage: package
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t my-kotlin-app .
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
