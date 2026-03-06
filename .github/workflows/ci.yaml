@@ -1,5 +1,7 @@
 name: Kotlin Build and Dockerize
-
+permissions:
+  contents: read
+  packages: write
 on:
   push:
     branches: [ "main" ]
