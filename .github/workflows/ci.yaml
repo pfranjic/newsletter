@@ -45,6 +45,7 @@ jobs:
           context: .
           load: true # This makes the image available locally for testing in the runner
           tags: ghcr.io/pfranjic/newsletter:latest
+          push: true
 
       # 6. Verify (Optional)
       - name: Check Docker Images
