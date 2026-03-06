@@ -1,0 +1,49 @@
+name: Kotlin Build and Dockerize
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Get the source code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Setup Java (Using the version that matches your Dockerfile)
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle' # This saves 2-3 minutes per build by caching dependencies
+
+      # 3. Build the JAR
+      # We use the Gradle wrapper inside your project
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      # 4. Set up Docker BuildX (Better for caching and modern Docker features)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 5. Build the Docker Image
+      # This step looks for your Dockerfile and uses the JAR from the previous step
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true # This makes the image available locally for testing in the runner
+          tags: my-kotlin-app:latest
+
+      # 6. Verify (Optional)
+      - name: Check Docker Images
+        run: docker images
