@@ -47,3 +47,14 @@ jobs:
       # 6. Verify (Optional)
       - name: Check Docker Images
         run: docker images
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      - name: Deploy to Railway
+        run: railway up --detach
+        env:
+          RAILWAY_TOKEN: 4c0cb9de-2a2c-4422-9fa5-2f0024708834
+  
