@@ -42,7 +42,7 @@ jobs:
         with:
           context: .
           load: true # This makes the image available locally for testing in the runner
-          tags: my-kotlin-app:latest
+          tags: ghcr.io/pfranjic/newsletter:latest
 
       # 6. Verify (Optional)
       - name: Check Docker Images
