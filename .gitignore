@@ -1,0 +1,30 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Java / Kotlin
+*.class
+out/
+
+# Logs
+*.log
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment / local overrides
+.env
+.env.*
+*.local
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
