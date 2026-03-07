@@ -11,7 +11,7 @@ class IpLocationService(
     @Value("\${external.ip-geo-service.url}") private val ipGeoServiceUrl: String
 ) {
 
-    fun getUserLocation(ipAddress: String): IpLocationResult {
+    fun getUserCity(ipAddress: String): String {
         val targetIp = ipAddress.trim()
         require(targetIp.isNotBlank()) { "ipAddress is required" }
 
