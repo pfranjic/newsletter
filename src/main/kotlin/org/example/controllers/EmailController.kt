@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.example.service.EmailStatusService
 import org.example.service.ExternalEmailService
+import org.example.service.IpLocationService
+import org.example.service.PdfGenerationService
 
 @RestController
 @RequestMapping("/api/email")
@@ -17,7 +19,7 @@ class EmailController(
 
     @PostMapping("/send")
     fun sendEmail(@RequestBody request: EmailRequest): ResponseEntity<String> {
-        if (request.to.isBlank() || request.subject.isBlank() || request.body.isBlank()) {
+        if (request.to.isBlank()) {
             return ResponseEntity.badRequest().body("to, subject, and body are required")
         }
 
@@ -40,5 +42,4 @@ class EmailController(
 
 data class EmailRequest(
     val to: String,
-
 )
