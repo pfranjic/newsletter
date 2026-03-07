@@ -15,7 +15,7 @@ class PdfGenerationService(
     fun generatePdf(title: String, body: String): ByteArray {
         val response = restClientBuilder
             .build()
-            .get()
+            .post()
             .uri(pdfServiceUrl)
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_PDF)
