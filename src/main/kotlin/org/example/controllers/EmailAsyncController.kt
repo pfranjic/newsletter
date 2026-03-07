@@ -1,4 +1,4 @@
-package org.example.controllers
+src/main/kotlin/org/example/controllers/EmailController.ktpackage org.example.controllers
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -11,7 +11,7 @@ import kotlin.system.measureTimeMillis
 
 @RestController
 @RequestMapping("/api/email")
-class EmailController(
+class EmailAsyncController(
     private val externalEmailService: ExternalEmailService,
     private val ipLocationService: IpLocationService,
     private val pdfGenerationService: PdfGenerationService,
