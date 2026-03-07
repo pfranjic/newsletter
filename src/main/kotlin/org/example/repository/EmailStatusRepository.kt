@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface EmailStatusRepository : JpaRepository<EmailStatus, Long> {
+    fun findByEmailId(emailId: String): EmailStatus?
     fun findByStatus(status: String): List<EmailStatus>
-    fun saveEmailStatus(emailStatus: EmailStatus): EmailStatus = save(emailStatus)
 }

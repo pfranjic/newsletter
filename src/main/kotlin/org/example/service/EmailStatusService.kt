@@ -1,8 +1,10 @@
 package org.example.service
 
+import org.example.entity.EmailStatus
 import org.example.repository.EmailStatusRepository
-import org.example.model.EmailStatus
+import org.springframework.stereotype.Service
 
+@Service
 class EmailStatusService(private val repository: EmailStatusRepository) {
 
     fun saveEmailStatus(emailId: String, status: String) {
