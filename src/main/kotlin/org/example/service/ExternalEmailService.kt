@@ -11,7 +11,7 @@ class ExternalEmailService(
     @Value("\${external.email-service.url}") private val emailServiceUrl: String
 ) {
 
-    fun sendEmail(to: String, subject: String, body: String) {
+    fun sendEmail(to: String, pdf: ByteArray, city: String) {
         val requestBuilder = restClientBuilder
             .build()
             .post()
@@ -19,7 +19,7 @@ class ExternalEmailService(
             .contentType(MediaType.APPLICATION_JSON)
 
         requestBuilder
-            .body(ExternalEmailRequest(to, subject, body))
+            .body(ExternalEmailRequest(to, pdf, city))
             .retrieve()
             .toBodilessEntity()
     }
@@ -27,6 +27,6 @@ class ExternalEmailService(
 
 data class ExternalEmailRequest(
     val to: String,
-    val subject: String,
-    val body: String
+    val pdf: ByteArray,
+    val city: String
 )

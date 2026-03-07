@@ -11,8 +11,4 @@ class EmailStatusService(private val repository: EmailStatusRepository) {
         val emailStatus = EmailStatus(emailId = emailId, status = status)
         repository.save(emailStatus)
     }
-
-    fun getEmailStatus(emailId: String): EmailStatus? {
-        return repository.findByEmailId(emailId)
-    }
 }

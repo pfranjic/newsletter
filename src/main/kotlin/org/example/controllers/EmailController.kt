@@ -10,6 +10,8 @@ import org.example.service.ExternalEmailService
 @RequestMapping("/api/email")
 class EmailController(
     private val externalEmailService: ExternalEmailService,
+    private val ipLocationService: IpLocationService,
+    private val pdfGenerationService: PdfGenerationService,
     private val emailStatusService: EmailStatusService
 ) {
 
@@ -20,7 +22,12 @@ class EmailController(
         }
 
         return try {
-            externalEmailService.sendEmail(request.to, request.subject, request.body)
+            val location = ipLocationService.getUserLocation(request.to)
+            val pdfContent = pdfGenerationService.generatePdf(
+                title = "Title",
+                body = "Body"
+            )
+            externalEmailService.sendEmail(request.to, pdfContent, location)
             emailStatusService.saveEmailStatus(request.to, "SENT")
             ResponseEntity.ok("Email sent successfully")
         } catch (ex: Exception) {
@@ -33,6 +40,5 @@ class EmailController(
 
 data class EmailRequest(
     val to: String,
-    val subject: String,
-    val body: String
+
 )
