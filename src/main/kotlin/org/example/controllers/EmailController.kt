@@ -24,7 +24,7 @@ class EmailController(
         }
 
         return try {
-            val location = ipLocationService.getUserCity(request.to)
+            val location = ipLocationService.getUserCity(request.ip)
             val pdfContent = pdfGenerationService.generatePdf(
                 title = "Title",
                 body = "Body"
@@ -42,4 +42,5 @@ class EmailController(
 
 data class EmailRequest(
     val to: String,
+    val ip: String
 )

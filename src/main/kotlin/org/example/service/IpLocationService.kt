@@ -28,9 +28,7 @@ class IpLocationService(
             throw IllegalStateException(response.message ?: "Unable to resolve location for IP")
         }
 
-        return IpLocationResult(
-            city = response.city
-        )
+        return response.city ?: throw IllegalStateException("City information is missing in geolocation response")
     }
 }
 
