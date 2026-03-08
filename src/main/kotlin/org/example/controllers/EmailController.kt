@@ -9,6 +9,8 @@ import org.example.service.IpLocationService
 import org.example.service.PdfGenerationService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.client.RestClientException
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.bind.annotation.*
 import kotlin.system.measureTimeMillis
 
@@ -43,11 +45,21 @@ class EmailController(
                     emailStatusService.saveEmailStatus(request.to, "SENT")
                 }
             ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
-        } catch (ex: Exception) {
+        } catch (ex: IllegalArgumentException) {
             emailStatusService.saveEmailStatus(request.to, "FAILED")
             ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Failed to send email: ${ex.message}")
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Invalid email request")
+        } catch (ex: IllegalStateException) {
+            emailStatusService.saveEmailStatus(request.to, "FAILED")
+            ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body("Failed to process email with upstream services")
+        } catch (ex: RestClientException) {
+            emailStatusService.saveEmailStatus(request.to, "FAILED")
+            ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body("Failed to reach upstream email services")
         }
     }
 
@@ -84,11 +96,18 @@ class EmailController(
                     }
                 }
             ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
-        } catch (ex: Exception) {
-//            emailStatusService.saveEmailStatus(request.to, "FAILED")
+        } catch (ex: IllegalArgumentException) {
             ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Failed to send email: ${ex.message}")
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Invalid email request")
+        } catch (ex: IllegalStateException) {
+            ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body("Failed to process email with upstream services")
+        } catch (ex: WebClientException) {
+            ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body("Failed to reach upstream email services")
         }
     }
 
@@ -117,11 +136,18 @@ class EmailController(
                     }
                 }
             ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
-        } catch (ex: Exception) {
-//            emailStatusService.saveEmailStatus(request.to, "FAILED")
+        } catch (ex: IllegalArgumentException) {
             ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Failed to send email: ${ex.message}")
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Invalid email request")
+        } catch (ex: IllegalStateException) {
+            ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body("Failed to process email with upstream services")
+        } catch (ex: WebClientException) {
+            ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body("Failed to reach upstream email services")
         }
     }
 }
