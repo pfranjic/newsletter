@@ -32,34 +32,17 @@ class EmailController(
             return ResponseEntity.badRequest().body("to, subject, and body are required")
         }
 
-        return try {
-            val timeMillis =
-                measureTimeMillis {
-                    val location = ipLocationService.getUserCity(request.ip)
-                    val pdfContent =
-                        pdfGenerationService.generatePdf(
-                            title = "Title",
-                            body = "Body",
-                        )
-                    externalEmailService.sendEmail(request.to, pdfContent, location)
-                    emailStatusService.saveEmailStatusBlocking(request.to, "SENT")
-                }
-            ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
-        } catch (ex: IllegalArgumentException) {
-            emailStatusService.saveEmailStatusBlocking(request.to, "FAILED")
-            ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body("Invalid email request")
-        } catch (ex: IllegalStateException) {
-            emailStatusService.saveEmailStatusBlocking(request.to, "FAILED")
-            ResponseEntity
-                .status(HttpStatus.BAD_GATEWAY)
-                .body("Failed to process email with upstream services")
-        } catch (ex: RestClientException) {
-            emailStatusService.saveEmailStatusBlocking(request.to, "FAILED")
-            ResponseEntity
-                .status(HttpStatus.BAD_GATEWAY)
-                .body("Failed to reach upstream email services")
+        return executeBlockingEmailFlow(
+            onFailure = { emailStatusService.saveEmailStatusBlocking(request.to, "FAILED") },
+        ) {
+            val location = ipLocationService.getUserCity(request.ip)
+            val pdfContent =
+                pdfGenerationService.generatePdf(
+                    title = "Title",
+                    body = "Body",
+                )
+            externalEmailService.sendEmail(request.to, pdfContent, location)
+            emailStatusService.saveEmailStatusBlocking(request.to, "SENT")
         }
     }
 
@@ -71,43 +54,27 @@ class EmailController(
             return ResponseEntity.badRequest().body("to, subject, and body are required")
         }
 
-        return try {
-            val timeMillis =
-                measureTimeMillis {
-                    coroutineScope {
-                        logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" } // stays same
+        return executeSuspendEmailFlow {
+            coroutineScope {
+                logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" }
 
-                        val location =
-                            async {
-                                ipLocationService.getUserCityNonBlocking(request.ip)
-                            }
-                        val pdfContent =
-                            async {
-                                pdfGenerationService.generatePdfNonBlocking(
-                                    title = "Title",
-                                    body = "Body",
-                                )
-                            }
-                        logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" } // stays same
-
-                        externalEmailService.sendEmailNonBlocking(request.to, pdfContent.await(), location.await())
-                        logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" }
-                        emailStatusService.saveEmailStatusNonBlocking(request.to, "SENT")
+                val location =
+                    async {
+                        ipLocationService.getUserCityNonBlocking(request.ip)
                     }
-                }
-            ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
-        } catch (ex: IllegalArgumentException) {
-            ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body("Invalid email request")
-        } catch (ex: IllegalStateException) {
-            ResponseEntity
-                .status(HttpStatus.BAD_GATEWAY)
-                .body("Failed to process email with upstream services")
-        } catch (ex: WebClientException) {
-            ResponseEntity
-                .status(HttpStatus.BAD_GATEWAY)
-                .body("Failed to reach upstream email services")
+                val pdfContent =
+                    async {
+                        pdfGenerationService.generatePdfNonBlocking(
+                            title = "Title",
+                            body = "Body",
+                        )
+                    }
+                logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" } // stays same
+
+                externalEmailService.sendEmailNonBlocking(request.to, pdfContent.await(), location.await())
+                logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" } // could be different
+                emailStatusService.saveEmailStatusNonBlocking(request.to, "SENT")
+            }
         }
     }
 
@@ -119,37 +86,64 @@ class EmailController(
             return ResponseEntity.badRequest().body("to, subject, and body are required")
         }
 
-        return try {
-            val timeMillis =
-                measureTimeMillis {
-                    coroutineScope {
-                        logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" }
+        return executeSuspendEmailFlow {
+            coroutineScope {
+                logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" }
 
-                        val location = ipLocationService.getUserCityNonBlocking(request.ip)
-                        val pdfContent =
-                            pdfGenerationService.generatePdfNonBlocking(
-                                title = "Title",
-                                body = "Body",
-                            )
-                        externalEmailService.sendEmailNonBlocking(request.to, pdfContent, location)
-                        emailStatusService.saveEmailStatusNonBlocking(request.to, "SENT")
-                    }
-                }
-            ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
-        } catch (ex: IllegalArgumentException) {
-            ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body("Invalid email request")
-        } catch (ex: IllegalStateException) {
-            ResponseEntity
-                .status(HttpStatus.BAD_GATEWAY)
-                .body("Failed to process email with upstream services")
-        } catch (ex: WebClientException) {
-            ResponseEntity
-                .status(HttpStatus.BAD_GATEWAY)
-                .body("Failed to reach upstream email services")
+                val location = ipLocationService.getUserCityNonBlocking(request.ip)
+                val pdfContent =
+                    pdfGenerationService.generatePdfNonBlocking(
+                        title = "Title",
+                        body = "Body",
+                    )
+                externalEmailService.sendEmailNonBlocking(request.to, pdfContent, location)
+                emailStatusService.saveEmailStatusNonBlocking(request.to, "SENT")
+            }
         }
     }
+
+    private inline fun executeBlockingEmailFlow(
+        onFailure: () -> Unit,
+        action: () -> Unit,
+    ): ResponseEntity<String> =
+        try {
+            val timeMillis = measureTimeMillis { action() }
+            ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
+        } catch (ex: Exception) {
+            onFailure()
+            mapExceptionToResponse(ex)
+        }
+
+    private suspend inline fun executeSuspendEmailFlow(
+        action: suspend () -> Unit,
+    ): ResponseEntity<String> =
+        try {
+            val timeMillis = measureTimeMillis { action() }
+            ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
+        } catch (ex: Exception) {
+            mapExceptionToResponse(ex)
+        }
+
+    private fun mapExceptionToResponse(ex: Exception): ResponseEntity<String> =
+        when (ex) {
+            is IllegalArgumentException ->
+                ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid email request")
+
+            is IllegalStateException ->
+                ResponseEntity
+                    .status(HttpStatus.BAD_GATEWAY)
+                    .body("Failed to process email with upstream services")
+
+            is RestClientException,
+            is WebClientException ->
+                ResponseEntity
+                    .status(HttpStatus.BAD_GATEWAY)
+                    .body("Failed to reach upstream email services")
+
+            else -> throw ex
+        }
 }
 
 data class EmailRequest(
