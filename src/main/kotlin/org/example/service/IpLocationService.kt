@@ -81,28 +81,7 @@ class IpLocationService(
         }
 }
 
-data class IpLocationResult(
-    val query: String,
-    val country: String,
-    val region: String,
-    val city: String,
-    val zip: String,
-    val latitude: Double,
-    val longitude: Double,
-    val timezone: String,
-    val isp: String,
-)
-
 data class IpApiResponse(
     val status: String? = null,
-    val message: String? = null,
-    val query: String? = null,
-    val country: String? = null,
-    val regionName: String? = null,
-    val city: String? = null,
-    val zip: String? = null,
-    val lat: Double? = null,
-    val lon: Double? = null,
-    val timezone: String? = null,
-    val isp: String? = null,
+    val city: String? = null
 )
