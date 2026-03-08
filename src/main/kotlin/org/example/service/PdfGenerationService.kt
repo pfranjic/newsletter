@@ -7,6 +7,8 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.awaitBodyOrNull
 
 @Service
 class PdfGenerationService(
@@ -24,6 +26,19 @@ class PdfGenerationService(
             .body(ExternalPdfRequest(title = title, body = body))
             .retrieve()
             .body<ByteArray>()
+
+        return response ?: throw IllegalStateException("PDF service returned an empty response")
+    }
+
+    suspend fun generatePdfNonBlocking(title: String, body: String): ByteArray {
+        val webClient = WebClient.builder().build()
+        val response = webClient.post()
+            .uri(pdfServiceUrl)
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_PDF)
+            .bodyValue(ExternalPdfRequest(title = title, body = body))
+            .retrieve()
+            .awaitBodyOrNull<ByteArray>()
 
         return response ?: throw IllegalStateException("PDF service returned an empty response")
     }
