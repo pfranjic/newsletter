@@ -24,7 +24,7 @@ class EmailController(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    @PostMapping("/send")
+    @PostMapping("/send-blocking")
     fun sendEmail(
         @RequestBody request: EmailRequest,
     ): ResponseEntity<String> {
@@ -42,21 +42,21 @@ class EmailController(
                             body = "Body",
                         )
                     externalEmailService.sendEmail(request.to, pdfContent, location)
-                    emailStatusService.saveEmailStatus(request.to, "SENT")
+                    emailStatusService.saveEmailStatusBlocking(request.to, "SENT")
                 }
             ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
         } catch (ex: IllegalArgumentException) {
-            emailStatusService.saveEmailStatus(request.to, "FAILED")
+            emailStatusService.saveEmailStatusBlocking(request.to, "FAILED")
             ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body("Invalid email request")
         } catch (ex: IllegalStateException) {
-            emailStatusService.saveEmailStatus(request.to, "FAILED")
+            emailStatusService.saveEmailStatusBlocking(request.to, "FAILED")
             ResponseEntity
                 .status(HttpStatus.BAD_GATEWAY)
                 .body("Failed to process email with upstream services")
         } catch (ex: RestClientException) {
-            emailStatusService.saveEmailStatus(request.to, "FAILED")
+            emailStatusService.saveEmailStatusBlocking(request.to, "FAILED")
             ResponseEntity
                 .status(HttpStatus.BAD_GATEWAY)
                 .body("Failed to reach upstream email services")
@@ -111,7 +111,7 @@ class EmailController(
         }
     }
 
-    @PostMapping("/send-non-blocking2")
+    @PostMapping("/send-non-blocking-sequential")
     suspend fun sendEmailNonBlocking2(
         @RequestBody request: EmailRequest,
     ): ResponseEntity<String> {

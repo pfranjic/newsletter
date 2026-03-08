@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.body
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.reactive.function.client.awaitBodyOrNull
 
 @Service
@@ -18,19 +20,24 @@ class IpLocationService(
 ) {
     private val logger = KotlinLogging.logger {}
 
+    @Throws(IllegalStateException::class)
     fun getUserCity(ipAddress: String): String {
         val targetIp = ipAddress.trim()
         require(targetIp.isNotBlank()) { "ipAddress is required" }
 
         val response =
-            restClientBuilder
-                .build()
-                .post()
-                .uri("$ipGeoServiceUrl")
-                .body(mapOf("ip" to targetIp))
-                .retrieve()
-                .body<IpApiResponse>()
-                ?: throw IllegalStateException("Geolocation service returned an empty response")
+            try {
+                restClientBuilder
+                    .build()
+                    .post()
+                    .uri(ipGeoServiceUrl)
+                    .body(mapOf("ip" to targetIp))
+                    .retrieve()
+                    .body<IpApiResponse>()
+                    ?: throw IllegalStateException("Geolocation service returned an empty response")
+            } catch (ex: HttpServerErrorException.ServiceUnavailable) {
+                throw IllegalStateException("Geolocation service is temporarily unavailable", ex)
+            }
 
         if (response.status != "success") {
             throw IllegalStateException(response.message ?: "Unable to resolve location for IP")
@@ -40,20 +47,25 @@ class IpLocationService(
         return response.city ?: throw IllegalStateException("City information is missing in geolocation response")
     }
 
+    @Throws(IllegalStateException::class)
     suspend fun getUserCityNonBlocking(ipAddress: String): String {
-        val webClient = WebClient.builder().build()
         val targetIp = ipAddress.trim()
         require(targetIp.isNotBlank()) { "ipAddress is required" }
 
         val response =
-            webClient
-                .post()
-                .uri(ipGeoServiceUrl)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(mapOf("ip" to targetIp))
-                .retrieve()
-                .awaitBodyOrNull<IpApiResponse>()
-                ?: throw IllegalStateException("Geolocation service returned an empty response")
+            try {
+                WebClient.builder()
+                    .build()
+                    .post()
+                    .uri(ipGeoServiceUrl)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(mapOf("ip" to targetIp))
+                    .retrieve()
+                    .awaitBodyOrNull<IpApiResponse>()
+                    ?: throw IllegalStateException("Geolocation service returned an empty response")
+            } catch (ex: WebClientResponseException.ServiceUnavailable) {
+                throw IllegalStateException("Geolocation service is temporarily unavailable", ex)
+            }
 
         if (response.status != "success") {
             throw IllegalStateException(response.message ?: "Unable to resolve location for IP")
