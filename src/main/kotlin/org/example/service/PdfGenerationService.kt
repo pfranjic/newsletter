@@ -1,5 +1,6 @@
 package org.example.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
@@ -15,6 +16,7 @@ class PdfGenerationService(
     private val restClientBuilder: RestClient.Builder,
     @Value("\${external.pdf-service.url}") private val pdfServiceUrl: String
 ) {
+    private val logger = KotlinLogging.logger{}
 
     fun generatePdf(title: String, body: String): ByteArray {
         val response = restClientBuilder
@@ -26,6 +28,7 @@ class PdfGenerationService(
             .body(ExternalPdfRequest(title = title, body = body))
             .retrieve()
             .body<ByteArray>()
+        logger.info { "Thread pdf service blocking: ${Thread.currentThread().name}" }
 
         return response ?: throw IllegalStateException("PDF service returned an empty response")
     }
@@ -39,6 +42,7 @@ class PdfGenerationService(
             .bodyValue(ExternalPdfRequest(title = title, body = body))
             .retrieve()
             .awaitBodyOrNull<ByteArray>()
+        logger.info { "Thread pdf service non-blocking: ${Thread.currentThread().name}" }
 
         return response ?: throw IllegalStateException("PDF service returned an empty response")
     }

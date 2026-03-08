@@ -1,5 +1,6 @@
 package org.example.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
@@ -15,6 +16,7 @@ class IpLocationService(
     private val restClientBuilder: RestClient.Builder,
     @Value("\${external.ip-geo-service.url}") private val ipGeoServiceUrl: String
 ) {
+    private val logger = KotlinLogging.logger{}
 
     fun getUserCity(ipAddress: String): String {
         val targetIp = ipAddress.trim()
@@ -32,6 +34,7 @@ class IpLocationService(
         if (response.status != "success") {
             throw IllegalStateException(response.message ?: "Unable to resolve location for IP")
         }
+        logger.info { "Thread IP service blocking: ${Thread.currentThread().name}" }
 
         return response.city ?: throw IllegalStateException("City information is missing in geolocation response")
     }
@@ -52,6 +55,7 @@ class IpLocationService(
         if (response.status != "success") {
             throw IllegalStateException(response.message ?: "Unable to resolve location for IP")
         }
+        logger.info { "Thread IP service non-blocking: ${Thread.currentThread().name}" }
 
         return response.city ?: throw IllegalStateException("City information is missing in geolocation response")
     }
