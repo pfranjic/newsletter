@@ -32,7 +32,7 @@ class EmailController(
                     body = "Body"
                 )
                 externalEmailService.sendEmail(request.to, pdfContent, location)
-                emailStatusService.saveEmailStatus(request.to, "SENT")
+                //emailStatusService.saveEmailStatus(request.to, "SENT")
             }
             ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
         } catch (ex: Exception) {
