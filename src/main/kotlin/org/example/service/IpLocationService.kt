@@ -83,5 +83,6 @@ class IpLocationService(
 
 data class IpApiResponse(
     val status: String? = null,
-    val city: String? = null
+    val city: String? = null,
+    val message: String? = null
 )
