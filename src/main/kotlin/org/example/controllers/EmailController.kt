@@ -56,7 +56,7 @@ class EmailController(
 
         return executeSuspendEmailFlow {
             coroutineScope {
-                logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" }
+                logger.info { "Thread coroutine scope async: ${Thread.currentThread().name}" }
 
                 val location =
                     async {
@@ -69,10 +69,10 @@ class EmailController(
                             body = "Body",
                         )
                     }
-                logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" } // stays same
+                logger.info { "Thread coroutine scope async: ${Thread.currentThread().name}" } // stays same
 
                 externalEmailService.sendEmailNonBlocking(request.to, pdfContent.await(), location.await())
-                logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" } // could be different
+                logger.info { "Thread coroutine scope async: ${Thread.currentThread().name}" } // could be different
                 emailStatusService.saveEmailStatusNonBlocking(request.to, "SENT")
             }
         }
@@ -88,7 +88,7 @@ class EmailController(
 
         return executeSuspendEmailFlow {
             coroutineScope {
-                logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" }
+                logger.info { "Thread coroutine scope sequential: ${Thread.currentThread().name}" }
 
                 val location = ipLocationService.getUserCityNonBlocking(request.ip)
                 val pdfContent =
@@ -97,6 +97,8 @@ class EmailController(
                         body = "Body",
                     )
                 externalEmailService.sendEmailNonBlocking(request.to, pdfContent, location)
+                logger.info { "Thread coroutine scope sequential: ${Thread.currentThread().name}" } // stays same
+
                 emailStatusService.saveEmailStatusNonBlocking(request.to, "SENT")
             }
         }
