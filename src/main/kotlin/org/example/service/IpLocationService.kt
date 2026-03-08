@@ -1,9 +1,14 @@
 package org.example.service
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.awaitBodyOrNull
+import org.springframework.http.MediaType
 
 @Service
 class IpLocationService(
@@ -29,6 +34,30 @@ class IpLocationService(
         }
 
         return response.city ?: throw IllegalStateException("City information is missing in geolocation response")
+    }
+
+    suspend fun getUserCityNonBlocking(ipAddress: String): String {
+        val webClient = WebClient.builder().build()
+        val targetIp = ipAddress.trim()
+        require(targetIp.isNotBlank()) { "ipAddress is required" }
+
+        val response = webClient.post()
+            .uri(ipGeoServiceUrl)
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(mapOf("ip" to targetIp))
+            .retrieve()
+            .awaitBodyOrNull<IpApiResponse>() 
+            ?: throw IllegalStateException("Geolocation service returned an empty response")
+
+        if (response.status != "success") {
+            throw IllegalStateException(response.message ?: "Unable to resolve location for IP")
+        }
+
+        return response.city ?: throw IllegalStateException("City information is missing in geolocation response")
+    }
+
+    suspend fun getUserCityAsync(ipAddress: String): String = withContext(Dispatchers.IO) {
+        getUserCity(ipAddress)
     }
 }
 

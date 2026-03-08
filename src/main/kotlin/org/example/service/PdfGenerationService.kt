@@ -1,5 +1,7 @@
 package org.example.service
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -24,6 +26,10 @@ class PdfGenerationService(
             .body<ByteArray>()
 
         return response ?: throw IllegalStateException("PDF service returned an empty response")
+    }
+
+    suspend fun generatePdfAsync(title: String, body: String): ByteArray = withContext(Dispatchers.IO) {
+        generatePdf(title, body)
     }
 }
 

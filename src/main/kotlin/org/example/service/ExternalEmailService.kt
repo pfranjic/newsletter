@@ -1,5 +1,7 @@
 package org.example.service
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -22,6 +24,10 @@ class ExternalEmailService(
             .body(ExternalEmailRequest(to, pdf, city))
             .retrieve()
             .toBodilessEntity()
+    }
+
+    suspend fun sendEmailAsync(to: String, pdf: ByteArray, city: String) = withContext(Dispatchers.IO) {
+        sendEmail(to, pdf, city)
     }
 }
 
