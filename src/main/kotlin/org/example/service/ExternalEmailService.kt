@@ -12,15 +12,19 @@ import org.springframework.web.reactive.function.client.awaitBodilessEntity
 @Service
 class ExternalEmailService(
     private val restClientBuilder: RestClient.Builder,
-    @Value("\${external.email-service.url}") private val emailServiceUrl: String
+    @Value("\${external.email-service.url}") private val emailServiceUrl: String,
 ) {
-
-    fun sendEmail(to: String, pdf: ByteArray, city: String) {
-        val requestBuilder = restClientBuilder
-            .build()
-            .post()
-            .uri(emailServiceUrl)
-            .contentType(MediaType.APPLICATION_JSON)
+    fun sendEmail(
+        to: String,
+        pdf: ByteArray,
+        city: String,
+    ) {
+        val requestBuilder =
+            restClientBuilder
+                .build()
+                .post()
+                .uri(emailServiceUrl)
+                .contentType(MediaType.APPLICATION_JSON)
 
         requestBuilder
             .body(ExternalEmailRequest(to, pdf, city))
@@ -28,9 +32,14 @@ class ExternalEmailService(
             .toBodilessEntity()
     }
 
-    suspend fun sendEmailNonBlocking(to: String, pdf: ByteArray, city: String) {
+    suspend fun sendEmailNonBlocking(
+        to: String,
+        pdf: ByteArray,
+        city: String,
+    ) {
         val webClient = WebClient.builder().build()
-        webClient.post()
+        webClient
+            .post()
             .uri(emailServiceUrl)
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(ExternalEmailRequest(to, pdf, city))
@@ -38,7 +47,11 @@ class ExternalEmailService(
             .awaitBodilessEntity()
     }
 
-    suspend fun sendEmailAsync(to: String, pdf: ByteArray, city: String) = withContext(Dispatchers.IO) {
+    suspend fun sendEmailAsync(
+        to: String,
+        pdf: ByteArray,
+        city: String,
+    ) = withContext(Dispatchers.IO) {
         sendEmail(to, pdf, city)
     }
 }
@@ -46,5 +59,5 @@ class ExternalEmailService(
 data class ExternalEmailRequest(
     val to: String,
     val pdf: ByteArray,
-    val city: String
+    val city: String,
 )

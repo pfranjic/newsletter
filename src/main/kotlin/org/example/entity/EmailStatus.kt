@@ -9,13 +9,10 @@ import java.time.Instant
 data class EmailStatus(
     @Id
     val id: Long? = null,
-
     @Column("email_id")
     val emailId: String = "",
-
     @Column("status")
     val status: String = "",
-
     @Column("created_at")
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
 )

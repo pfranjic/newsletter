@@ -7,7 +7,4 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @Repository
-interface EmailStatusRepository : R2dbcRepository<EmailStatus, Long> {
-    fun findByEmailId(emailId: String): Mono<EmailStatus>
-    fun findByStatus(status: String): Flux<EmailStatus>
-}
+interface EmailStatusRepository : R2dbcRepository<EmailStatus, Long>
