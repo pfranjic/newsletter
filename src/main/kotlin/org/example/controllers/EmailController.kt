@@ -92,7 +92,7 @@ class EmailController(
 
                         externalEmailService.sendEmailNonBlocking(request.to, pdfContent.await(), location.await())
                         logger.info { "Thread coroutine scope: ${Thread.currentThread().name}" }
-                        emailStatusService.saveEmailStatus(request.to, "SENT")
+                        emailStatusService.saveEmailStatusNonBlocking(request.to, "SENT")
                     }
                 }
             ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
@@ -132,7 +132,7 @@ class EmailController(
                                 body = "Body",
                             )
                         externalEmailService.sendEmailNonBlocking(request.to, pdfContent, location)
-                        emailStatusService.saveEmailStatus(request.to, "SENT")
+                        emailStatusService.saveEmailStatusNonBlocking(request.to, "SENT")
                     }
                 }
             ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")

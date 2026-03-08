@@ -1,21 +1,22 @@
 package org.example.service
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.example.entity.EmailStatus
-import org.example.repository.EmailStatusRepository
+import org.example.repository.EmailStatusRepositoryNonBlocking
 import org.springframework.stereotype.Service
 
 @Service
 class EmailStatusService(
-    private val repository: EmailStatusRepository,
+    private val repository: EmailStatusRepositoryNonBlocking,
 ) {
     fun saveEmailStatus(
         emailId: String,
         status: String,
     ) {
         val emailStatus = EmailStatus(emailId = emailId, status = status)
-        repository.save(emailStatus).block()
+        runBlocking {repository.save(emailStatus) }
     }
 
     suspend fun saveEmailStatusAsync(
@@ -23,5 +24,13 @@ class EmailStatusService(
         status: String,
     ) = withContext(Dispatchers.IO) {
         saveEmailStatus(emailId, status)
+    }
+
+    suspend fun saveEmailStatusNonBlocking(
+        emailId: String,
+        status: String,
+    ) {
+        val emailStatus = EmailStatus(emailId = emailId, status = status)
+        repository.save(emailStatus)
     }
 }
