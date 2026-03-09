@@ -74,11 +74,6 @@ class IpLocationService(
 
         return response.city ?: throw IllegalStateException("City information is missing in geolocation response")
     }
-
-    suspend fun getUserCityAsync(ipAddress: String): String =
-        withContext(Dispatchers.IO) {
-            getUserCity(ipAddress)
-        }
 }
 
 data class IpApiResponse(

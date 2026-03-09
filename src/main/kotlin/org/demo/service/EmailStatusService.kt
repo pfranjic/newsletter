@@ -19,18 +19,13 @@ class EmailStatusService(
         runBlocking { repository.save(emailStatus) }
     }
 
-    suspend fun saveEmailStatusAsync(
-        emailId: String,
-        status: String,
-    ) = withContext(Dispatchers.IO) {
-        saveEmailStatusBlocking(emailId, status)
-    }
-
     suspend fun saveEmailStatusNonBlocking(
         emailId: String,
         status: String,
     ) {
         val emailStatus = EmailStatus(emailId = emailId, status = status)
-        repository.save(emailStatus)
+        withContext(Dispatchers.IO) {
+            repository.save(emailStatus)
+        }
     }
 }

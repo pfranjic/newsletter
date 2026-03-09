@@ -58,15 +58,6 @@ class ExternalEmailService(
             throw IllegalStateException("Failed to reach email service", ex)
         }
     }
-
-    @Throws(IllegalStateException::class)
-    suspend fun sendEmailAsync(
-        to: String,
-        pdf: ByteArray,
-        city: String,
-    ) = withContext(Dispatchers.IO) {
-        sendEmail(to, pdf, city)
-    }
 }
 
 data class ExternalEmailRequest(

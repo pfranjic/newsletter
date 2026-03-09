@@ -1,8 +1,10 @@
 package org.demo.controllers
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.demo.service.EmailStatusService
 import org.demo.service.ExternalEmailService
 import org.demo.service.IpLocationService
@@ -80,6 +82,7 @@ class EmailController(
             sendEmailNonBlocking(request, concurrent = false)
         }
     }
+    
 
     private inline fun executeBlockingEmailFlow(
         onSuccess: () -> Unit,
@@ -120,9 +123,9 @@ class EmailController(
 
             val (pdfContent, location) =
                 if (concurrent) {
-                    val locationDeferred = async { ipLocationService.getUserCityNonBlocking(request.ip) }
+                    val locationDeferred = async(Dispatchers.IO) { ipLocationService.getUserCityNonBlocking(request.ip) }
                     val pdfDeferred =
-                        async {
+                        async(Dispatchers.IO) {
                             pdfGenerationService.generatePdfNonBlocking(
                                 title = DEFAULT_PDF_TITLE,
                                 body = DEFAULT_PDF_BODY,
@@ -130,17 +133,21 @@ class EmailController(
                         }
                     Pair(pdfDeferred.await(), locationDeferred.await())
                 } else {
-                    val location = ipLocationService.getUserCityNonBlocking(request.ip)
+                    val location = withContext(Dispatchers.IO) { ipLocationService.getUserCityNonBlocking(request.ip) }
                     val pdf =
-                        pdfGenerationService.generatePdfNonBlocking(
-                            title = DEFAULT_PDF_TITLE,
-                            body = DEFAULT_PDF_BODY,
-                        )
+                        withContext(Dispatchers.IO) {
+                            pdfGenerationService.generatePdfNonBlocking(
+                                title = DEFAULT_PDF_TITLE,
+                                body = DEFAULT_PDF_BODY,
+                            )
+                        }
                     Pair(pdf, location)
                 }
 
             logger.info { "Thread coroutine scope $mode: ${Thread.currentThread().name}" }
-            externalEmailService.sendEmailNonBlocking(request.to, pdfContent, location)
+            withContext(Dispatchers.IO) {
+                externalEmailService.sendEmailNonBlocking(request.to, pdfContent, location)
+            }
         }
     }
 

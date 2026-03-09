@@ -67,14 +67,6 @@ class PdfGenerationService(
 
         return response ?: throw IllegalStateException("PDF service returned an empty response")
     }
-
-    suspend fun generatePdfAsync(
-        title: String,
-        body: String,
-    ): ByteArray =
-        withContext(Dispatchers.IO) {
-            generatePdf(title, body)
-        }
 }
 
 data class ExternalPdfRequest(
