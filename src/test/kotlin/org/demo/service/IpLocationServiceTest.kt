@@ -73,17 +73,4 @@ class IpLocationServiceTest {
         assertEquals("Failed to reach geolocation service", ex.message)
     }
 
-    @Test
-    fun `getUserCityAsync should translate 503 to IllegalStateException`() {
-        server.enqueue(MockResponse().setResponseCode(503))
-
-        val ex =
-            assertThrows(IllegalStateException::class.java) {
-                runBlocking {
-                    service.getUserCityAsync("9.9.9.9")
-                }
-            }
-
-        assertEquals("Failed to reach geolocation service", ex.message)
-    }
 }

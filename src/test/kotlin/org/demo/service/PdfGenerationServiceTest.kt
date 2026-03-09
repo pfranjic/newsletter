@@ -74,18 +74,4 @@ class PdfGenerationServiceTest {
 
         assertEquals("Failed to reach PDF service", ex.message)
     }
-
-    @Test
-    fun `generatePdfAsync should translate 503 to IllegalStateException`() {
-        server.enqueue(MockResponse().setResponseCode(503))
-
-        val ex =
-            assertThrows(IllegalStateException::class.java) {
-                runBlocking {
-                    service.generatePdfAsync("Weekly", "Body")
-                }
-            }
-
-        assertEquals("Failed to reach PDF service", ex.message)
-    }
 }

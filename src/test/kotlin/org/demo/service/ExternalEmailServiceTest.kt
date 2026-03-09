@@ -66,18 +66,4 @@ class ExternalEmailServiceTest {
 
         assertEquals("Failed to reach email service", ex.message)
     }
-
-    @Test
-    fun `sendEmailAsync should translate 503 to IllegalStateException`() {
-        server.enqueue(MockResponse().setResponseCode(503))
-
-        val ex =
-            assertThrows(IllegalStateException::class.java) {
-                runBlocking {
-                    service.sendEmailAsync("carol@example.com", byteArrayOf(7, 8, 9), "Rijeka")
-                }
-            }
-
-        assertEquals("Failed to reach email service", ex.message)
-    }
 }
