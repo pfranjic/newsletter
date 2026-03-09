@@ -1,6 +1,6 @@
-package org.example.repository
+package org.demo.repository
 
-import org.example.entity.EmailStatus
+import org.demo.entity.EmailStatus
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 

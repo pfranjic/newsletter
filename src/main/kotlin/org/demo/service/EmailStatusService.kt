@@ -1,10 +1,10 @@
-package org.example.service
+package org.demo.service
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.example.entity.EmailStatus
-import org.example.repository.EmailStatusRepositoryNonBlocking
+import org.demo.entity.EmailStatus
+import org.demo.repository.EmailStatusRepositoryNonBlocking
 import org.springframework.stereotype.Service
 
 @Service

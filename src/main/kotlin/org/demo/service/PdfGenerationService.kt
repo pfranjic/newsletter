@@ -1,4 +1,4 @@
-package org.example.service
+package org.demo.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers

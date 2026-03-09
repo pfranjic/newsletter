@@ -1,4 +1,4 @@
-package org.example.service
+package org.demo.service
 
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse

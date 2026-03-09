@@ -1,10 +1,10 @@
-package org.example.controllers
+package org.demo.controllers
 
 import kotlinx.coroutines.runBlocking
-import org.example.service.EmailStatusService
-import org.example.service.ExternalEmailService
-import org.example.service.IpLocationService
-import org.example.service.PdfGenerationService
+import org.demo.service.EmailStatusService
+import org.demo.service.ExternalEmailService
+import org.demo.service.IpLocationService
+import org.demo.service.PdfGenerationService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

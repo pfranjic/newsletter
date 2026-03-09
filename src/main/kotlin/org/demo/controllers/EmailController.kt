@@ -1,12 +1,12 @@
-package org.example.controllers
+package org.demo.controllers
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import org.example.service.EmailStatusService
-import org.example.service.ExternalEmailService
-import org.example.service.IpLocationService
-import org.example.service.PdfGenerationService
+import org.demo.service.EmailStatusService
+import org.demo.service.ExternalEmailService
+import org.demo.service.IpLocationService
+import org.demo.service.PdfGenerationService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
