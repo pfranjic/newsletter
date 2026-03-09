@@ -5,10 +5,10 @@ import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientException
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.awaitBodilessEntity
 
 @Service
@@ -34,8 +34,8 @@ class ExternalEmailService(
                 .body(ExternalEmailRequest(to, pdf, city))
                 .retrieve()
                 .toBodilessEntity()
-        } catch (ex: HttpServerErrorException.ServiceUnavailable) {
-            throw IllegalStateException("Email service is temporarily unavailable", ex)
+        } catch (ex: RestClientException) {
+            throw IllegalStateException("Failed to reach email service", ex)
         }
     }
 
@@ -54,8 +54,8 @@ class ExternalEmailService(
                 .bodyValue(ExternalEmailRequest(to, pdf, city))
                 .retrieve()
                 .awaitBodilessEntity()
-        } catch (ex: WebClientResponseException.ServiceUnavailable) {
-            throw IllegalStateException("Email service is temporarily unavailable", ex)
+        } catch (ex: WebClientException) {
+            throw IllegalStateException("Failed to reach email service", ex)
         }
     }
 

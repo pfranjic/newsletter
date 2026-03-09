@@ -9,8 +9,6 @@ import org.example.service.IpLocationService
 import org.example.service.PdfGenerationService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.client.RestClientException
-import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.bind.annotation.*
 import kotlin.system.measureTimeMillis
 
@@ -137,12 +135,6 @@ class EmailController(
                 ResponseEntity
                     .status(HttpStatus.BAD_GATEWAY)
                     .body("Failed to process email with upstream services")
-
-            is RestClientException,
-            is WebClientException ->
-                ResponseEntity
-                    .status(HttpStatus.BAD_GATEWAY)
-                    .body("Failed to reach upstream email services")
 
             else -> throw ex
         }

@@ -7,10 +7,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.RestClientException
 import org.springframework.web.client.body
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.awaitBodyOrNull
 
 @Service
@@ -36,8 +36,8 @@ class PdfGenerationService(
                     .body(ExternalPdfRequest(title = title, body = body))
                     .retrieve()
                     .body<ByteArray>()
-            } catch (ex: HttpServerErrorException.ServiceUnavailable) {
-                throw IllegalStateException("PDF service is temporarily unavailable", ex)
+            } catch (ex: RestClientException) {
+                throw IllegalStateException("Failed to reach PDF service", ex)
             }
         logger.info { "Thread pdf service blocking: ${Thread.currentThread().name}" }
 
@@ -60,8 +60,8 @@ class PdfGenerationService(
                     .bodyValue(ExternalPdfRequest(title = title, body = body))
                     .retrieve()
                     .awaitBodyOrNull<ByteArray>()
-            } catch (ex: WebClientResponseException.ServiceUnavailable) {
-                throw IllegalStateException("PDF service is temporarily unavailable", ex)
+            } catch (ex: WebClientException) {
+                throw IllegalStateException("Failed to reach PDF service", ex)
             }
         logger.info { "Thread pdf service non-blocking: ${Thread.currentThread().name}" }
 

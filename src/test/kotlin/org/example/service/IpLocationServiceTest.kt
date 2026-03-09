@@ -39,7 +39,7 @@ class IpLocationServiceTest {
                 service.getUserCity("8.8.8.8")
             }
 
-        assertEquals("Geolocation service is temporarily unavailable", ex.message)
+        assertEquals("Failed to reach geolocation service", ex.message)
     }
 
     @Test
@@ -70,7 +70,7 @@ class IpLocationServiceTest {
                 }
             }
 
-        assertEquals("Geolocation service is temporarily unavailable", ex.message)
+        assertEquals("Failed to reach geolocation service", ex.message)
     }
 
     @Test
@@ -84,6 +84,6 @@ class IpLocationServiceTest {
                 }
             }
 
-        assertEquals("Geolocation service is temporarily unavailable", ex.message)
+        assertEquals("Failed to reach geolocation service", ex.message)
     }
 }

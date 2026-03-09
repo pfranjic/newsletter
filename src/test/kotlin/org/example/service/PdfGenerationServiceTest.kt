@@ -40,7 +40,7 @@ class PdfGenerationServiceTest {
                 service.generatePdf("Weekly", "Body")
             }
 
-        assertEquals("PDF service is temporarily unavailable", ex.message)
+        assertEquals("Failed to reach PDF service", ex.message)
     }
 
     @Test
@@ -72,7 +72,7 @@ class PdfGenerationServiceTest {
                 }
             }
 
-        assertEquals("PDF service is temporarily unavailable", ex.message)
+        assertEquals("Failed to reach PDF service", ex.message)
     }
 
     @Test
@@ -86,6 +86,6 @@ class PdfGenerationServiceTest {
                 }
             }
 
-        assertEquals("PDF service is temporarily unavailable", ex.message)
+        assertEquals("Failed to reach PDF service", ex.message)
     }
 }

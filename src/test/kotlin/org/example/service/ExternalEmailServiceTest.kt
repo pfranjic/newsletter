@@ -39,7 +39,7 @@ class ExternalEmailServiceTest {
                 service.sendEmail("alice@example.com", byteArrayOf(1, 2, 3), "Zagreb")
             }
 
-        assertEquals("Email service is temporarily unavailable", ex.message)
+        assertEquals("Failed to reach email service", ex.message)
     }
 
     @Test
@@ -64,7 +64,7 @@ class ExternalEmailServiceTest {
                 }
             }
 
-        assertEquals("Email service is temporarily unavailable", ex.message)
+        assertEquals("Failed to reach email service", ex.message)
     }
 
     @Test
@@ -78,6 +78,6 @@ class ExternalEmailServiceTest {
                 }
             }
 
-        assertEquals("Email service is temporarily unavailable", ex.message)
+        assertEquals("Failed to reach email service", ex.message)
     }
 }

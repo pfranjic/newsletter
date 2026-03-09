@@ -7,10 +7,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.RestClientException
 import org.springframework.web.client.body
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.awaitBodyOrNull
 
 @Service
@@ -35,8 +35,8 @@ class IpLocationService(
                     .retrieve()
                     .body<IpApiResponse>()
                     ?: throw IllegalStateException("Geolocation service returned an empty response")
-            } catch (ex: HttpServerErrorException.ServiceUnavailable) {
-                throw IllegalStateException("Geolocation service is temporarily unavailable", ex)
+            } catch (ex: RestClientException) {
+                throw IllegalStateException("Failed to reach geolocation service", ex)
             }
 
         if (response.status != "success") {
@@ -63,8 +63,8 @@ class IpLocationService(
                     .retrieve()
                     .awaitBodyOrNull<IpApiResponse>()
                     ?: throw IllegalStateException("Geolocation service returned an empty response")
-            } catch (ex: WebClientResponseException.ServiceUnavailable) {
-                throw IllegalStateException("Geolocation service is temporarily unavailable", ex)
+            } catch (ex: WebClientException) {
+                throw IllegalStateException("Failed to reach geolocation service", ex)
             }
 
         if (response.status != "success") {
