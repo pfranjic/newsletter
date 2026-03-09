@@ -143,7 +143,7 @@ class EmailControllerTest {
             `when`(pdfGenerationService.generatePdfNonBlocking("Title", "Body")).thenReturn(pdf)
         }
 
-        val response = runBlocking { controller.sendEmailNonBlocking2(request) }
+        val response = runBlocking { controller.sendEmailNonBlockingSequential(request) }
 
         assertEquals(HttpStatus.OK, response.statusCode)
         runBlocking {
@@ -161,7 +161,7 @@ class EmailControllerTest {
             `when`(ipLocationService.getUserCityNonBlocking(request.ip)).thenThrow(IllegalStateException("upstream down"))
         }
 
-        val response = runBlocking { controller.sendEmailNonBlocking2(request) }
+        val response = runBlocking { controller.sendEmailNonBlockingSequential(request) }
 
         assertEquals(HttpStatus.BAD_GATEWAY, response.statusCode)
         assertEquals("Failed to process email with upstream services", response.body)

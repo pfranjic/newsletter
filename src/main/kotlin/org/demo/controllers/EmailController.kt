@@ -28,6 +28,9 @@ class EmailController(
         private const val STATUS_SENT = "SENT"
         private const val STATUS_FAILED = "FAILED"
         private const val REQUIRED_FIELDS_MESSAGE = "to, subject, and body are required"
+        private const val SUCCESS_MESSAGE_TEMPLATE = "Email sent successfully. Elapsed time %d ms"
+        private const val INVALID_REQUEST_MESSAGE = "Invalid email request"
+        private const val UPSTREAM_FAILURE_MESSAGE = "Failed to process email with upstream services"
     }
 
     @PostMapping("/send-blocking")
@@ -60,12 +63,12 @@ class EmailController(
             onSuccess = { emailStatusService.saveEmailStatusNonBlocking(request.to, STATUS_SENT) },
             onFailure = { emailStatusService.saveEmailStatusNonBlocking(request.to, STATUS_FAILED) },
         ) {
-            sendEmailNonBlockingInternal(request, runConcurrently = true)
+            sendEmailNonBlocking(request, concurrent = true)
         }
     }
 
     @PostMapping("/send-non-blocking-sequential")
-    suspend fun sendEmailNonBlocking2(
+    suspend fun sendEmailNonBlockingSequential(
         @RequestBody request: EmailRequest,
     ): ResponseEntity<String> {
         validateRequest(request)?.let { return it }
@@ -74,7 +77,7 @@ class EmailController(
             onSuccess = { emailStatusService.saveEmailStatusNonBlocking(request.to, STATUS_SENT) },
             onFailure = { emailStatusService.saveEmailStatusNonBlocking(request.to, STATUS_FAILED) },
         ) {
-            sendEmailNonBlockingInternal(request, runConcurrently = false)
+            sendEmailNonBlocking(request, concurrent = false)
         }
     }
 
@@ -86,7 +89,7 @@ class EmailController(
         try {
             val timeMillis = measureTimeMillis { action() }
             onSuccess()
-            ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
+            successResponse(timeMillis)
         } catch (ex: Exception) {
             onFailure()
             mapExceptionToResponse(ex)
@@ -100,23 +103,23 @@ class EmailController(
         try {
             val timeMillis = measureTimeMillis { action() }
             onSuccess()
-            ResponseEntity.ok("Email sent successfully. Elapsed time $timeMillis ms")
+            successResponse(timeMillis)
         } catch (ex: Exception) {
             onFailure()
             mapExceptionToResponse(ex)
         }
 
-    private suspend fun sendEmailNonBlockingInternal(
+    private suspend fun sendEmailNonBlocking(
         request: EmailRequest,
-        runConcurrently: Boolean,
+        concurrent: Boolean,
     ) {
-        val mode = if (runConcurrently) "async" else "sequential"
+        val mode = if (concurrent) "async" else "sequential"
 
         coroutineScope {
             logger.info { "Thread coroutine scope $mode: ${Thread.currentThread().name}" }
 
             val (pdfContent, location) =
-                if (runConcurrently) {
+                if (concurrent) {
                     val locationDeferred = async { ipLocationService.getUserCityNonBlocking(request.ip) }
                     val pdfDeferred =
                         async {
@@ -141,6 +144,9 @@ class EmailController(
         }
     }
 
+    private fun successResponse(timeMillis: Long): ResponseEntity<String> =
+        ResponseEntity.ok(SUCCESS_MESSAGE_TEMPLATE.format(timeMillis))
+
     private fun validateRequest(request: EmailRequest): ResponseEntity<String>? {
         if (request.to.isBlank()) {
             return ResponseEntity.badRequest().body(REQUIRED_FIELDS_MESSAGE)
@@ -154,12 +160,12 @@ class EmailController(
             is IllegalArgumentException ->
                 ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body("Invalid email request")
+                    .body(INVALID_REQUEST_MESSAGE)
 
             is IllegalStateException ->
                 ResponseEntity
                     .status(HttpStatus.BAD_GATEWAY)
-                    .body("Failed to process email with upstream services")
+                    .body(UPSTREAM_FAILURE_MESSAGE)
 
             else -> throw ex
         }
