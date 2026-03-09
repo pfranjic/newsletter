@@ -58,20 +58,16 @@ class EmailController(
     @PostMapping("/send-non-blocking")
     suspend fun sendEmailNonBlocking(
         @RequestBody request: EmailRequest,
-    ): ResponseEntity<String> {
-        validateRequest(request)?.let { return it }
-
-        return executeSuspendEmailFlow(
-            onSuccess = { emailStatusService.saveEmailStatusNonBlocking(request.to, STATUS_SENT) },
-            onFailure = { emailStatusService.saveEmailStatusNonBlocking(request.to, STATUS_FAILED) },
-        ) {
-            sendEmailNonBlocking(request, concurrent = true)
-        }
-    }
+    ): ResponseEntity<String> = sendEmailNonBlockingByMode(request, concurrent = true)
 
     @PostMapping("/send-non-blocking-sequential")
     suspend fun sendEmailNonBlockingSequential(
         @RequestBody request: EmailRequest,
+    ): ResponseEntity<String> = sendEmailNonBlockingByMode(request, concurrent = false)
+
+    private suspend fun sendEmailNonBlockingByMode(
+        request: EmailRequest,
+        concurrent: Boolean,
     ): ResponseEntity<String> {
         validateRequest(request)?.let { return it }
 
@@ -79,10 +75,9 @@ class EmailController(
             onSuccess = { emailStatusService.saveEmailStatusNonBlocking(request.to, STATUS_SENT) },
             onFailure = { emailStatusService.saveEmailStatusNonBlocking(request.to, STATUS_FAILED) },
         ) {
-            sendEmailNonBlocking(request, concurrent = false)
+            sendEmailNonBlocking(request, concurrent)
         }
     }
-    
 
     private inline fun executeBlockingEmailFlow(
         onSuccess: () -> Unit,
@@ -117,39 +112,49 @@ class EmailController(
         concurrent: Boolean,
     ) {
         val mode = if (concurrent) "async" else "sequential"
+        val payload = buildEmailPayload(request, concurrent, mode)
 
+        logger.info { "Thread coroutine scope $mode: ${Thread.currentThread().name}" }
+        externalEmailService.sendEmailNonBlocking(request.to, payload.pdfContent, payload.location)
+    }
+
+    private suspend fun buildEmailPayload(
+        request: EmailRequest,
+        concurrent: Boolean,
+        mode: String,
+    ): EmailPayload =
+        if (concurrent) {
+            buildEmailPayloadConcurrently(request, mode)
+        } else {
+            buildEmailPayloadSequentially(request, mode)
+        }
+
+    private suspend fun buildEmailPayloadConcurrently(
+        request: EmailRequest,
+        mode: String,
+    ): EmailPayload =
         coroutineScope {
             logger.info { "Thread coroutine scope $mode: ${Thread.currentThread().name}" }
-
-            val (pdfContent, location) =
-                if (concurrent) {
-                    val locationDeferred = async(Dispatchers.IO) { ipLocationService.getUserCityNonBlocking(request.ip) }
-                    val pdfDeferred =
-                        async(Dispatchers.IO) {
-                            pdfGenerationService.generatePdfNonBlocking(
-                                title = DEFAULT_PDF_TITLE,
-                                body = DEFAULT_PDF_BODY,
-                            )
-                        }
-                    Pair(pdfDeferred.await(), locationDeferred.await())
-                } else {
-                    val location = withContext(Dispatchers.IO) { ipLocationService.getUserCityNonBlocking(request.ip) }
-                    val pdf =
-                        withContext(Dispatchers.IO) {
-                            pdfGenerationService.generatePdfNonBlocking(
-                                title = DEFAULT_PDF_TITLE,
-                                body = DEFAULT_PDF_BODY,
-                            )
-                        }
-                    Pair(pdf, location)
-                }
-
-            logger.info { "Thread coroutine scope $mode: ${Thread.currentThread().name}" }
-            withContext(Dispatchers.IO) {
-                externalEmailService.sendEmailNonBlocking(request.to, pdfContent, location)
-            }
+            val locationDeferred = async(Dispatchers.IO) { ipLocationService.getUserCityNonBlocking(request.ip) }
+            val pdfDeferred = async(Dispatchers.IO) { createDefaultPdfNonBlocking() }
+            EmailPayload(pdfContent = pdfDeferred.await(), location = locationDeferred.await())
         }
+
+    private suspend fun buildEmailPayloadSequentially(
+        request: EmailRequest,
+        mode: String,
+    ): EmailPayload {
+        logger.info { "Thread coroutine scope $mode: ${Thread.currentThread().name}" }
+        val location = withContext(Dispatchers.IO) { ipLocationService.getUserCityNonBlocking(request.ip) }
+        val pdfContent = withContext(Dispatchers.IO) { createDefaultPdfNonBlocking() }
+        return EmailPayload(pdfContent = pdfContent, location = location)
     }
+
+    private suspend fun createDefaultPdfNonBlocking(): ByteArray =
+        pdfGenerationService.generatePdfNonBlocking(
+            title = DEFAULT_PDF_TITLE,
+            body = DEFAULT_PDF_BODY,
+        )
 
     private fun successResponse(timeMillis: Long): ResponseEntity<String> =
         ResponseEntity.ok(SUCCESS_MESSAGE_TEMPLATE.format(timeMillis))
@@ -181,4 +186,9 @@ class EmailController(
 data class EmailRequest(
     val to: String,
     val ip: String,
+)
+
+private data class EmailPayload(
+    val pdfContent: ByteArray,
+    val location: String,
 )
